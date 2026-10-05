@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edge AI Multi-Camera Bandwidth & Performance Profiler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="logo-group">
+      <div class="logo-badge">⚡</div>
+      <div class="title-box">
+        <h1>MULTI-CAMERA BANDWIDTH PROFILER</h1>
+        <p>EDGE AI DEPLOYMENT STRESS-TEST & BENCHMARK SUITE</p>
+      </div>
+    </div>
+    <div class="header-status-group">
+      <div id="system-status" class="system-status-pill status-healthy">
+        <span class="status-dot"></span>
+        <span id="status-text">HEALTHY</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="metrics-hud">
+      <div class="metric-card glass c-bandwidth">
+        <div class="metric-label"><span>Ingress Bandwidth</span><span>NET</span></div>
+        <div class="metric-value-box">
+          <span id="metric-bandwidth" class="metric-number">0.0</span>
+          <span class="metric-unit">Mbps</span>
+        </div>
+        <div class="metric-sub" id="metric-bw-sub">RTSP H.264 Ingress</div>
+      </div>
+
+      <div class="metric-card glass c-latency">
+        <div class="metric-label"><span>End-to-End Latency</span><span>LAT</span></div>
+        <div class="metric-value-box">
+          <span id="metric-latency" class="metric-number">0</span>
+          <span class="metric-unit">ms</span>
+        </div>
+        <div class="metric-sub" id="metric-lat-sub">P95: 0 ms | Ingest: 0ms</div>
+      </div>
+
+      <div class="metric-card glass c-drop">
+        <div class="metric-label"><span>Drop Frame Rate</span><span>QUEUE</span></div>
+        <div class="metric-value-box">
+          <span id="metric-drop" class="metric-number">0.0</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-sub" id="metric-drop-sub">0 dropped / 0 received</div>
+      </div>
+
+      <div class="metric-card glass c-cpu">
+        <div class="metric-label"><span>Host CPU Load</span><span>SYS</span></div>
+        <div class="metric-value-box">
+          <span id="metric-cpu" class="metric-number">0.0</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-sub" id="metric-cpu-sub">Multi-stream Decode</div>
+      </div>
+
+      <div class="metric-card glass c-gpu">
+        <div class="metric-label"><span>AI / GPU Compute</span><span>TENSOR</span></div>
+        <div class="metric-value-box">
+          <span id="metric-gpu" class="metric-number">0.0</span>
+          <span class="metric-unit">%</span>
+        </div>
+        <div class="metric-sub" id="metric-gpu-sub">Inference Engine Load</div>
+      </div>
+    </section>
+
+    <section class="recommendation-banner glass" id="recommendation-box">
+      <div class="rec-left">
+        <div class="rec-icon" id="rec-icon">💡</div>
+        <div>
+          <div class="rec-title" id="rec-title">Analyzing Edge AI Capacity...</div>
+          <div class="rec-desc" id="rec-desc">Calculating real-time telemetry and hardware limits across camera streams.</div>
+        </div>
+      </div>
+      <div class="rec-tag" id="rec-tag">RECOMMENDED: 3 Cams @ 720p</div>
+    </section>
+
+    <section class="controls-bar glass">
+      <div class="control-group">
+        <span class="control-label">Cameras:</span>
+        <div class="btn-toggle-group" id="camera-selector">
+          <button class="btn-toggle active" data-cams="1">1 CAM</button>
+          <button class="btn-toggle" data-cams="2">2 CAMS</button>
+          <button class="btn-toggle" data-cams="3">3 CAMS</button>
+          <button class="btn-toggle" data-cams="4">4 CAMS</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Resolution:</span>
+        <select id="resolution-select" class="select-custom">
+          <option value="360p">360p (Lightweight / 0.8 Mbps)</option>
+          <option value="720p" selected>720p (Balanced / 2.9 Mbps)</option>
+          <option value="1080p">1080p (High-Res / 6.2 Mbps)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">AI Stress Level:</span>
+        <select id="model-select" class="select-custom">
+          <option value="nano" selected>Nano (Lightweight Edge)</option>
+          <option value="small">Small (Standard YOLO)</option>
+          <option value="medium">Medium (Heavy Workload)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <button id="btn-stress-test" class="btn-action btn-stress">
+          <span id="stress-btn-icon">⚡</span>
+          <span id="stress-btn-text">Run Stress Test</span>
+        </button>
+        <button id="btn-reset" class="btn-action">
+          <span>⟳</span>
+          <span>Reset Counters</span>
+        </button>
+        <a href="/api/export_csv" class="btn-action" download="edge_ai_benchmarks.csv" style="text-decoration: none;">
+          <span>⬇</span>
+          <span>Export CSV</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="camera-grid-section">
+      <div class="section-title">LIVE MULTI-CAMERA RTSP STREAMS & DETECTIONS</div>
+      <div class="camera-grid" id="camera-grid">
+        <div class="cam-tile" id="cam-card-1">
+          <div class="cam-header">
+            <div class="cam-title-badge">
+              <span class="status-dot" style="background:#10b981; width:8px; height:8px;"></span>
+              <span>CAM 01: FACTORY LINE</span>
+            </div>
+            <div class="cam-badges-right">
+              <span class="badge-pill badge-fps" id="cam1-fps">-- FPS</span>
+              <span class="badge-pill badge-lat" id="cam1-lat">-- ms</span>
+              <span class="badge-pill badge-bw" id="cam1-bw">-- Mbps</span>
+              <span class="badge-pill badge-drop" id="cam1-drop">0.0%</span>
+            </div>
+          </div>
+          <img class="cam-video-frame" id="cam1-video" src="/video_feed/1" alt="Camera 1 Stream">
+        </div>
+
+        <div class="cam-tile offline" id="cam-card-2">
+          <div class="cam-header">
+            <div class="cam-title-badge">
+              <span class="status-dot" style="background:#6b7280; width:8px; height:8px;"></span>
+              <span>CAM 02: TRAFFIC INTERSECTION</span>
+            </div>
+            <div class="cam-badges-right">
+              <span class="badge-pill badge-fps" id="cam2-fps">-- FPS</span>
+              <span class="badge-pill badge-lat" id="cam2-lat">-- ms</span>
+              <span class="badge-pill badge-bw" id="cam2-bw">-- Mbps</span>
+              <span class="badge-pill badge-drop" id="cam2-drop">0.0%</span>
+            </div>
+          </div>
+          <img class="cam-video-frame" id="cam2-video" style="display:none;" alt="Camera 2 Stream">
+          <div class="offline-message" id="cam2-offline">STREAM STANDBY / CLICK 2 CAMS TO ACTIVATE</div>
+        </div>
+
+        <div class="cam-tile offline" id="cam-card-3">
+          <div class="cam-header">
+            <div class="cam-title-badge">
+              <span class="status-dot" style="background:#6b7280; width:8px; height:8px;"></span>
+              <span>CAM 03: PERIMETER SECURITY</span>
+            </div>
+            <div class="cam-badges-right">
+              <span class="badge-pill badge-fps" id="cam3-fps">-- FPS</span>
+              <span class="badge-pill badge-lat" id="cam3-lat">-- ms</span>
+              <span class="badge-pill badge-bw" id="cam3-bw">-- Mbps</span>
+              <span class="badge-pill badge-drop" id="cam3-drop">0.0%</span>
+            </div>
+          </div>
+          <img class="cam-video-frame" id="cam3-video" style="display:none;" alt="Camera 3 Stream">
+          <div class="offline-message" id="cam3-offline">STREAM STANDBY / CLICK 3 CAMS TO ACTIVATE</div>
+        </div>
+
+        <div class="cam-tile offline" id="cam-card-4">
+          <div class="cam-header">
+            <div class="cam-title-badge">
+              <span class="status-dot" style="background:#6b7280; width:8px; height:8px;"></span>
+              <span>CAM 04: WAREHOUSE LOGISTICS</span>
+            </div>
+            <div class="cam-badges-right">
+              <span class="badge-pill badge-fps" id="cam4-fps">-- FPS</span>
+              <span class="badge-pill badge-lat" id="cam4-lat">-- ms</span>
+              <span class="badge-pill badge-bw" id="cam4-bw">-- Mbps</span>
+              <span class="badge-pill badge-drop" id="cam4-drop">0.0%</span>
+            </div>
+          </div>
+          <img class="cam-video-frame" id="cam4-video" style="display:none;" alt="Camera 4 Stream">
+          <div class="offline-message" id="cam4-offline">STREAM STANDBY / CLICK 4 CAMS TO ACTIVATE</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="camera-grid-section">
+      <div class="section-title">MULTI-CAMERA PROFILING CURVES (STRESS TEST TELEMETRY)</div>
+      <div class="charts-grid">
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <span class="chart-title">1. Average FPS per Camera</span>
+            <span style="font-size:11px; color:#10b981; font-family:var(--font-mono);">SLA: ≥ 20 FPS</span>
+          </div>
+          <div class="chart-canvas-wrapper"><canvas id="chart-fps"></canvas></div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <span class="chart-title">2. End-to-End Latency (Avg & P95)</span>
+            <span style="font-size:11px; color:#4facfe; font-family:var(--font-mono);">SLA: ≤ 100 ms</span>
+          </div>
+          <div class="chart-canvas-wrapper"><canvas id="chart-latency"></canvas></div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <span class="chart-title">3. Hardware Saturation (CPU & GPU %)</span>
+            <span style="font-size:11px; color:#f59e0b; font-family:var(--font-mono);">Bottleneck Detection</span>
+          </div>
+          <div class="chart-canvas-wrapper"><canvas id="chart-hardware"></canvas></div>
+        </div>
+
+        <div class="chart-card glass">
+          <div class="chart-header">
+            <span class="chart-title">4. Network Ingress Bandwidth (Mbps)</span>
+            <span style="font-size:11px; color:#00f2fe; font-family:var(--font-mono);">Traffic Scaling</span>
+          </div>
+          <div class="chart-canvas-wrapper"><canvas id="chart-bandwidth"></canvas></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Multi-Camera Bandwidth & Edge AI Profiler | Track 4: Deployment & Edge AI | Real-time Benchmarking Suite
+  </footer>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
