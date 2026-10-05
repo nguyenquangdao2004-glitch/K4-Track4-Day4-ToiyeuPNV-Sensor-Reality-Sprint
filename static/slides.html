@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Thuyết Trình: Multi-Camera Bandwidth & Edge AI Profiler</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --cyan: #00f2fe;
+      --blue: #4facfe;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --crimson: #ef4444;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: linear-gradient(90deg, var(--cyan), var(--blue));
+      width: 0%;
+      transition: width 0.3s ease;
+      z-index: 100;
+    }
+    /* Header nav */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 13, 22, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .topic-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: rgba(0, 242, 254, 0.1);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn-nav {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .btn-nav:hover { background: rgba(255, 255, 255, 0.18); }
+    .btn-demo-link {
+      background: linear-gradient(135deg, var(--emerald), #059669);
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Slides viewport */
+    .deck-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    .slide {
+      position: absolute;
+      width: 90%;
+      max-width: 1200px;
+      height: 82%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 50px;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.96) translateY(20px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      z-index: 10;
+    }
+
+    /* Slide Elements */
+    .slide-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .slide-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+      background: linear-gradient(90deg, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .slide-body {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Grid layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .card-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .card-box h3 {
+      font-size: 16px;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    .card-box p, .card-box li {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    ul { padding-left: 20px; }
+
+    /* Tables */
+    table.slide-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    table.slide-table th {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--cyan);
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    table.slide-table td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+    .tag-healthy { color: var(--emerald); font-weight: bold; }
+    .tag-degraded { color: var(--amber); font-weight: bold; }
+    .tag-overload { color: var(--crimson); font-weight: bold; }
+
+    /* Speaker Notes Bar */
+    .speaker-notes-drawer {
+      border-top: 1px solid var(--border);
+      background: rgba(10, 14, 23, 0.95);
+      padding: 12px 28px;
+      display: none;
+      font-size: 13px;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .speaker-notes-drawer.open { display: block; }
+
+    /* Footer indicators */
+    .slide-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .dots-nav { display: flex; gap: 8px; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .dot.active { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar" id="progress-bar"></div>
+
+  <!-- Header -->
+  <div class="top-bar">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span class="topic-badge">TRACK 4: DEPLOYMENT / EDGE AI</span>
+      <span style="font-size:13px; color:var(--muted); font-weight:600;">Multi-Camera Bandwidth Profiling</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn-nav" id="btn-toggle-notes">🎙️ Speaker Notes (P)</button>
+      <a href="/" target="_blank" class="btn-nav btn-demo-link" style="text-decoration:none;">⚡ Live Demo Dashboard</a>
+      <button class="btn-nav" id="btn-prev">◀</button>
+      <span id="slide-num" style="font-family:'JetBrains Mono'; font-size:13px; color:var(--cyan); font-weight:bold;">1 / 7</span>
+      <button class="btn-nav" id="btn-next">▶</button>
+    </div>
+  </div>
+
+  <!-- Slide Deck Viewport -->
+  <div class="deck-container">
+
+    <!-- SLIDE 1: TITLE & TEAM -->
+    <div class="slide active" data-notes="Chào thầy cô và các bạn. Nhóm em gồm 5 thành viên chọn Đề tài 7: Multi-Camera Bandwidth Profiling. Mục tiêu không phải là huấn luyện model AI lớn, mà là đo lường năng lực chịu tải thực tế của một thiết bị Edge AI khi mở rộng số lượng camera.">
+      <div class="slide-tag">01 / TỔNG QUAN ĐỀ TÀI</div>
+      <div class="slide-title">Multi-Camera Bandwidth & Edge AI Performance Profiling</div>
+      <div class="slide-body" style="justify-content:center; align-items:center; text-align:center;">
+        <div style="font-size: 50px; margin-bottom: 10px;">⚡ 📹 🚗 🤖</div>
+        <p style="font-size: 18px; color: #cbd5e1; max-width: 800px; margin-bottom: 24px;">
+          Đo lường tác động của hiện tượng <strong>Nghẽn băng thông & Bão hòa tính toán</strong> trên thiết bị Edge khi mở rộng đa luồng camera trong bài toán xe tự hành ADAS & Robot AMR.
+        </p>
+        <div class="card-box" style="display:inline-block; text-align:left; min-width: 500px;">
+          <h3 style="text-align:center; margin-bottom:12px;">NHÓM THỰC HIỆN (5 THÀNH VIÊN)</h3>
+          <ul style="list-style:none; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <li>👤 <strong>TV1:</strong> Trưởng nhóm & Pitching</li>
+            <li>👤 <strong>TV2:</strong> Ingestion & Network Stream</li>
+            <li>👤 <strong>TV3:</strong> AI Pipeline & Bounded Queue</li>
+            <li>👤 <strong>TV4:</strong> Profiler Engine & CSV Logger</li>
+            <li>👤 <strong>TV5:</strong> Dashboard & Benchmark Lead</li>
+          </ul>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Repo: ToiyeuPNV-multi-camera-bandwidth-profiler</span>
+        <div class="dots-nav" id="dots-container"></div>
+        <span>Commit: 1296c52</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: PROBLEM & SENSOR FAILURE -->
+    <div class="slide" data-notes="Trong thực tế, một xe ADAS hoặc robot AMR có từ 4 đến 8 camera bao quanh. Vấn đề lớn nhất ở Edge không phải là độ chính xác của AI mà là nghẽn băng thông và bão hòa phần cứng. Khi tăng số camera, hệ thống sẽ gãy ở đâu: mạng, CPU decode hay GPU inference?">
+      <div class="slide-tag">02 / BÀI TOÁN & SENSOR FAILURE THỰC TẾ</div>
+      <div class="slide-title">Hệ thống Edge AI gãy ở đâu khi tăng số Camera?</div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card-box">
+            <h3>🎯 Bối cảnh triển khai (Deployment Context)</h3>
+            <ul>
+              <li><strong>Nền tảng:</strong> Xe tự hành ADAS / Robot AMR nhà máy thông minh.</li>
+              <li><strong>Tính năng:</strong> Phát hiện vật cản & người đi bộ 360° theo thời gian thực.</li>
+              <li><strong>Sensor:</strong> Mảng 4 camera bao quát 4 góc (Trước, Sau, Trái, Phải).</li>
+              <li><strong>Câu hỏi cốt lõi:</strong> Thiết bị Edge xử lý ổn định tối đa bao nhiêu camera trước khi xảy ra sụt giảm FPS và rớt khung hình?</li>
+            </ul>
+          </div>
+
+          <div class="card-box" style="border-color: rgba(239, 68, 68, 0.3);">
+            <h3 style="color: var(--crimson);">🚨 Failure Case Thực Tế</h3>
+            <ul>
+              <li><strong>Lỗi Sensor/Hệ thống:</strong> Nghẽn băng thông truyền thông & Quá tải tính toán (Bandwidth & Compute Saturation).</li>
+              <li><strong>Cơ chế gây lỗi:</strong> Video stream gửi 30 FPS, nhưng khâu giải mã CPU và GPU tensor không tiêu thụ kịp.</li>
+              <li><strong>Hệ quả:</strong> Hàng đợi bị tràn (Buffer Overflow) ➔ Gây rớt khung hình (Drop Frame) ➔ Mất dấu vật cản và làm chậm phản ứng phanh khẩn cấp.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Failure Analysis: Multi-camera Bottleneck</span>
+        <div class="dots-nav"></div>
+        <span>Step 1 & 2 Completed</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: METHOD & PIPELINE -->
+    <div class="slide" data-notes="Nhóm tham chiếu kiến trúc NVIDIA DeepStream SDK và Bounded Queue. Để bảo toàn tính thời gian thực, hàng đợi buffer được giới hạn maxsize=2. Nếu AI bận, frame mới bị drop ngay tại tầng I/O. Chúng em đo đồng thời cả 5 chỉ số: FPS, Latency E2E & P95, Drop %, CPU/GPU và Ingress Mbps.">
+      <div class="slide-tag">03 / KIẾN TRÚC PIPELINE & BỘ ĐO PROFILER</div>
+      <div class="slide-title">Kiến trúc Bounded Queue & Realtime Telemetry</div>
+      <div class="slide-body">
+        <div class="card-box" style="background:rgba(0,0,0,0.6); padding:20px; font-family:'JetBrains Mono'; font-size:12px; line-height:1.8;">
+          CAM 01 (Factory) ──┐<br>
+          CAM 02 (Traffic) ──┼──> Bounded Queue (maxsize=2) ──> AI Inference (Edge Detector)<br>
+          CAM 03 (Security) ─┤          │                                  │<br>
+          CAM 04 (Warehouse) ┘          ▼                                  ▼<br>
+                              [Drop Frame Engine]                  [Processing Done]<br>
+                                        │                                  │<br>
+                                        └──────────────────┬───────────────┘<br>
+                                                           ▼<br>
+                                            [Performance Profiler Module]<br>
+                                            • FPS | Latency Avg & P95 | Drop Frame %<br>
+                                            • Host CPU % | Edge GPU % | Ingress Mbps
+        </div>
+        <div class="grid-3" style="margin-top:10px;">
+          <div class="card-box">
+            <h3>⏱️ End-to-End Latency</h3>
+            <p>Đo từ lúc camera tạo frame đến khi AI vẽ xong bounding box (Average & P95).</p>
+          </div>
+          <div class="card-box">
+            <h3>📉 Bounded Buffer Drop</h3>
+            <p>Cơ chế leaky queue giống NVIDIA DeepStream: tự hủy frame nếu AI không kịp xử lý.</p>
+          </div>
+          <div class="card-box">
+            <h3>📡 Real Bandwidth</h3>
+            <p>Đo lưu lượng mạng thực tế nạp vào qua mạng H.264 tính bằng Megabit/giây (Mbps).</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Pipeline: OpenCV + FastAPI + WebSockets + Chart.js</span>
+        <div class="dots-nav"></div>
+        <span>Architecture verified</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: BENCHMARK RESULTS -->
+    <div class="slide" data-notes="Đây là bảng số liệu thực đo được trích từ file CSV. Ở baseline 1 camera, hệ thống đạt 30 FPS, trễ 5.6ms, GPU 32%. Tăng lên 2 và 3 camera, GPU tăng lên 60%. Đến 4 camera 720p, GPU là 73.8%. Nhưng khi chuyển 4 camera sang 1080p, GPU chạm đỉnh 95.7% và băng thông vọt lên 23 Mbps, kích hoạt trạng thái OVERLOAD với 5.6% drop frame.">
+      <div class="slide-tag">04 / BẰNG CHỨNG THỰC NGHIỆM ĐỊNH LƯỢNG</div>
+      <div class="slide-title">Bảng Kết Quả Benchmark Đối Chứng (Thực Đo)</div>
+      <div class="slide-body">
+        <table class="slide-table">
+          <thead>
+            <tr>
+              <th>Điều kiện thử nghiệm</th>
+              <th>Số Cam</th>
+              <th>Độ phân giải</th>
+              <th>FPS / Cam</th>
+              <th>Latency P95</th>
+              <th>Drop Frame</th>
+              <th>GPU Load</th>
+              <th>Băng thông Ingress</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Baseline</strong></td>
+              <td>1 Cam</td>
+              <td>720p</td>
+              <td>30.0</td>
+              <td>9.0 ms</td>
+              <td>0.0%</td>
+              <td>32.1%</td>
+              <td>2.94 Mbps</td>
+              <td><span class="tag-healthy">HEALTHY</span></td>
+            </tr>
+            <tr>
+              <td><strong>Điều kiện A</strong></td>
+              <td>2 Cams</td>
+              <td>720p</td>
+              <td>25.7</td>
+              <td>8.1 ms</td>
+              <td>0.0%</td>
+              <td>46.9%</td>
+              <td>6.03 Mbps</td>
+              <td><span class="tag-healthy">HEALTHY</span></td>
+            </tr>
+            <tr>
+              <td><strong>Điều kiện B</strong></td>
+              <td>3 Cams</td>
+              <td>720p</td>
+              <td>27.7</td>
+              <td>8.0 ms</td>
+              <td>0.0%</td>
+              <td>60.7%</td>
+              <td>8.85 Mbps</td>
+              <td><span class="tag-degraded">DEGRADED</span></td>
+            </tr>
+            <tr>
+              <td><strong>Điều kiện C</strong></td>
+              <td>4 Cams</td>
+              <td>720p</td>
+              <td>30.0</td>
+              <td>7.5 ms</td>
+              <td>0.0%</td>
+              <td>73.8%</td>
+              <td>11.02 Mbps</td>
+              <td><span class="tag-degraded">DEGRADED</span></td>
+            </tr>
+            <tr style="background:rgba(239,68,68,0.15);">
+              <td><strong>Điều kiện D (Stress)</strong></td>
+              <td>4 Cams</td>
+              <td>1080p</td>
+              <td>25.2</td>
+              <td>10.3 ms</td>
+              <td><strong>5.6%</strong></td>
+              <td><strong>95.7%</strong></td>
+              <td><strong>23.00 Mbps</strong></td>
+              <td><span class="tag-overload">OVERLOAD</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card-box" style="margin-top:10px;">
+          <h3>🧮 Ước lượng Băng thông thô:</h3>
+          <p style="font-family:'JetBrains Mono';">
+            Raw Bandwidth (4 cams 1080p RGB24) = 4 × 1920 × 1080 × 30 × 24 bps = <strong>5.97 Gbps</strong><br>
+            ➔ Vượt quá giới hạn cổng USB 3.0 (3.2 Gbps) và GigE (1 Gbps) ➔ Bắt buộc phải nén H.264 (23 Mbps) và gây thêm tải giải mã CPU (55.3%).
+          </p>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Log file: data/benchmarks.csv (Total 460 snapshots)</span>
+        <div class="dots-nav"></div>
+        <span>Quantitative Proof</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: FAILURE CASE ANALYSIS -->
+    <div class="slide" data-notes="Nhóm phân tích chi tiết failure case: Khi GPU chạm 95.7%, nút thắt chính nằm ở GPU Compute. Vì không tính toán kịp, hàng đợi bị tràn và 1,459 frames đã bị loại bỏ. Chúng em tách bạch: số 95.7% là kết quả tự đo; lý thuyết leaky queue là từ NVIDIA DeepStream; còn việc phanh chậm 0.5-1.5m là suy luận kỹ thuật của nhóm.">
+      <div class="slide-tag">05 / PHÂN TÍCH FAILURE CASE</div>
+      <div class="slide-title">Điểm gãy Overload: GPU Saturation & Buffer Overflow</div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card-box" style="border-color:var(--crimson);">
+            <h3 style="color:var(--crimson);">🚨 Hiện tượng ghi nhận tại 4 Cams 1080p</h3>
+            <ul>
+              <li><strong>GPU Compute Saturation:</strong> Đạt <strong>95.7%</strong> ➔ Tensor inference không xử lý kịp 120 FPS tổng.</li>
+              <li><strong>CPU Decode Overhead:</strong> Tăng lên <strong>55.3%</strong> do phải giải nén 4 luồng H.264 liên tục.</li>
+              <li><strong>Buffer Overflow:</strong> <strong>1,459 frames bị hủy</strong> (tỉ lệ rớt 5.6%).</li>
+              <li><strong>Ingress Bandwidth:</strong> Chạm mốc <strong>23.00 Mbps</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="card-box">
+            <h3>⚖️ Phân định 3 cấp độ thông tin (Rubric)</h3>
+            <ul>
+              <li><strong style="color:var(--cyan);">[Nhóm tự đo]:</strong> GPU 95.7%, CPU 55.3%, Drop 5.6%, Bandwidth 23 Mbps (đo thực tế trên máy).</li>
+              <li><strong style="color:var(--amber);">[Nguồn tham khảo]:</strong> NVIDIA DeepStream chỉ ra rằng khi vượt công suất phần cứng, bắt buộc phải dùng leaky queue để tránh tích lũy trễ.</li>
+              <li><strong style="color:var(--crimson);">[Suy luận kỹ thuật]:</strong> Rớt 5.6% frame liên tiếp làm đứt đoạn trajectory bám vết đối tượng, làm chậm phản ứng phanh ADAS từ 0.5–1.5m.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Evidence: data/dashboard_benchmark_evidence.png</span>
+        <div class="dots-nav"></div>
+        <span>Failure dissected</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: ENGINEERING DECISIONS & RECOMMENDATION -->
+    <div class="slide" data-notes="Từ số liệu đo được, nhóm đưa ra 2 quyết định kỹ thuật: 1 là cấu hình trần an toàn của máy là 4 camera 720p hoặc 3 camera 1080p. 2 là giải pháp hạ tải thông minh: khi GPU vượt 85%, hệ thống tự động hạ 3 camera phụ xuống 15 FPS và 360p, giữ nguyên camera trước để tiết kiệm 50% băng thông và đưa GPU về dưới 75%.">
+      <div class="slide-tag">06 / QUYẾT ĐỊNH KỸ THUẬT & KHUYẾN NGHỊ</div>
+      <div class="slide-title">Engineering Decisions & Adaptive Load Shedding</div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="card-box">
+            <h3>1. Xác định Giới hạn an toàn (Capacity Ceiling)</h3>
+            <p>Đối với thiết bị Edge này:</p>
+            <ul>
+              <li><strong>Cấu hình tối đa an toàn:</strong> <strong>4 Cameras @ 720p 30 FPS</strong> (GPU 73.8%, Drop 0.0%) hoặc 3 Cameras @ 1080p.</li>
+              <li>Không triển khai 4 camera 1080p ở chế độ đồng dạng vì dẫn đến bão hòa GPU và drop frame.</li>
+            </ul>
+          </div>
+
+          <div class="card-box">
+            <h3>2. Thuật toán Hạ tải thích ứng (Adaptive Sizing)</h3>
+            <p>Khi telemetry phát hiện <code>gpu_load > 85%</code>:</p>
+            <ul>
+              <li><strong>Camera Trước (Critical):</strong> Giữ 1080p @ 30 FPS nhận diện xa.</li>
+              <li><strong>3 Camera Phụ (Góc/Lùi):</strong> Tự động hạ xuống <strong>720p @ 15 FPS</strong>.</li>
+              <li><strong>Hiệu quả:</strong> Tiết kiệm ngay 50% băng thông, đưa GPU về mức an toàn <strong>&lt;75%</strong> và triệt tiêu drop frame.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-box" style="margin-top:10px;">
+          <h3>🔌 Khuyến nghị chuẩn giao tiếp vật lý:</h3>
+          <p>
+            Sử dụng <strong>GMSL2 / FPD-Link III SerDes (3–6 Gbps/link)</strong> cho hệ thống xe ADAS / Robot AMR để truyền video raw độ trễ thấp và đồng bộ phần cứng, thay thế cho giao tiếp USB 3.0 và Ethernet dân dụng.
+          </p>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>Trade-off & Deployment Recommendations</span>
+        <div class="dots-nav"></div>
+        <span>Decision Ready</span>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: LIVE DEMO & Q&A -->
+    <div class="slide" data-notes="Nhóm xin phép chuyển sang giao diện live demo tại localhost 8000. Thầy cô có thể thấy trực tiếp 4 luồng video với bounding box, và khi bấm nút 1, 2, 3, 4 cam thì đồ thị và trạng thái Healthy hay Overload sẽ nhảy ngay lập tức. Nhóm em xin cảm ơn và sẵn sàng trả lời câu hỏi.">
+      <div class="slide-tag">07 / DEMO TRỰC TIẾP & KẾT LUẬN</div>
+      <div class="slide-title">Trình Diễn Hệ Thống Trực Tiếp & Q&A</div>
+      <div class="slide-body" style="justify-content:center; align-items:center; text-align:center;">
+        <div style="font-size: 55px; margin-bottom: 16px;">🚀 🖥️ 📊</div>
+        <p style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 8px;">
+          Hệ thống Multi-Camera Profiler đang chạy trực tiếp tại cổng 8000
+        </p>
+        <p style="color: var(--muted); font-size: 14px; max-width: 650px; margin-bottom: 24px;">
+          Sẵn sàng thử nghiệm tương tác: Chuyển đổi số camera theo thời gian thực, kích hoạt Stress-test tự động và xuất báo cáo CSV.
+        </p>
+        <div style="display:flex; gap:16px;">
+          <a href="/" target="_blank" class="btn-nav btn-demo-link" style="padding:12px 24px; font-size:15px; text-decoration:none;">
+            ⚡ Mở Dashboard Live Demo
+          </a>
+          <a href="https://github.com/nguyenquangdao2004-glitch/K4-Track4-Day4-ToiyeuPNV-multi-camera-bandwidth-profiler" target="_blank" class="btn-nav" style="padding:12px 24px; font-size:15px; text-decoration:none;">
+            📂 Xem GitHub Repository
+          </a>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span>K4 - Track 4: Deployment & Edge AI</span>
+        <div class="dots-nav"></div>
+        <span>Thank you!</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Speaker Notes Drawer (Toggled with 'P' or button) -->
+  <div class="speaker-notes-drawer" id="speaker-notes">
+    <strong>🎙️ KỊCH BẢN THUYẾT TRÌNH (SPEAKER NOTES):</strong>
+    <p id="notes-content" style="margin-top:6px; color:#e2e8f0; font-family:'Outfit'; font-size:14px; line-height:1.6;"></p>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progress-bar');
+    const slideNum = document.getElementById('slide-num');
+    const dotsContainer = document.querySelectorAll('.dots-nav');
+    const notesDrawer = document.getElementById('speaker-notes');
+    const notesContent = document.getElementById('notes-content');
+    const btnNotes = document.getElementById('btn-toggle-notes');
+
+    let currentSlide = 0;
+
+    // Build dots
+    dotsContainer.forEach(container => {
+      container.innerHTML = '';
+      slides.forEach((_, idx) => {
+        const dot = document.createElement('div');
+        dot.className = `dot ${idx === 0 ? 'active' : ''}`;
+        dot.addEventListener('click', () => goToSlide(idx));
+        container.appendChild(dot);
+      });
+    });
+
+    function updateSlide() {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === currentSlide);
+      });
+
+      // Update dots
+      document.querySelectorAll('.dots-nav').forEach(c => {
+        const dots = c.querySelectorAll('.dot');
+        dots.forEach((d, idx) => d.classList.toggle('active', idx === currentSlide));
+      });
+
+      // Progress bar & counter
+      const pct = ((currentSlide + 1) / slides.length) * 100;
+      progressBar.style.width = `${pct}%`;
+      slideNum.innerText = `${currentSlide + 1} / ${slides.length}`;
+
+      // Speaker notes
+      const notes = slides[currentSlide].getAttribute('data-notes') || 'Không có ghi chú.';
+      notesContent.innerText = notes;
+    }
+
+    function goToSlide(n) {
+      currentSlide = Math.max(0, Math.min(n, slides.length - 1));
+      updateSlide();
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    document.getElementById('btn-next').addEventListener('click', nextSlide);
+    document.getElementById('btn-prev').addEventListener('click', prevSlide);
+
+    btnNotes.addEventListener('click', () => {
+      notesDrawer.classList.toggle('open');
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'p') {
+        notesDrawer.classList.toggle('open');
+      } else if (e.key.toLowerCase() === 'f') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+    });
+
+    updateSlide();
+  </script>
+</body>
+</html>
