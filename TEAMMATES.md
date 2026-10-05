@@ -9,7 +9,7 @@
 | **1** | **Nguyễn Quang Đạo** | **02394** | **Trưởng nhóm & System Architect / Pitch Lead** | [`reports/REPORT_NGUYEN_QUANG_DAO_02394.md`](reports/REPORT_NGUYEN_QUANG_DAO_02394.md) |
 | **2** | **Ngô Thế Việt** | **02594** | **Streaming Ingestion & Network Bandwidth Engineer** | [`reports/REPORT_NGO_THE_VIET_02594.md`](reports/REPORT_NGO_THE_VIET_02594.md) |
 | **3** | **Đinh Bảo Hưng** | **02524** | **AI Pipeline & Bounded Queue Engineer** | [`reports/REPORT_DINH_BAO_HUNG_02524.md`](reports/REPORT_DINH_BAO_HUNG_02524.md) |
-| **4** | **Nguyễn Thành Đô** | **02687** | **Performance Profiler & Telemetry Metrics Engineer** | [`reports/REPORT_NGUYEN_THANH_DO_02687.md`](reports/REPORT_NGUYEN_THANH_DO_02687.md) |
+| **4** | **Nguyễn Khánh Đô** | **02687** | **Performance Profiler & Telemetry Metrics Engineer** | [`reports/REPORT_NGUYEN_KHANH_DO_02687.md`](reports/REPORT_NGUYEN_KHANH_DO_02687.md) |
 | **5** | **Đoàn Phương Linh** | **02382** | **Dashboard Visualizer & Benchmark Validation Lead** | [`reports/REPORT_DOAN_PHUONG_LINH_02382.md`](reports/REPORT_DOAN_PHUONG_LINH_02382.md) |
 
 ---

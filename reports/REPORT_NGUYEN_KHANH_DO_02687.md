@@ -1,12 +1,12 @@
 # BÁO CÁO CÁ NHÂN LAB TRACK 4 - DAY 4
 ## ĐỀ TÀI 07: MULTI-CAMERA BANDWIDTH & EDGE AI PERFORMANCE PROFILING
 
-* **Họ và tên:** **Nguyễn Thành Đô**
+* **Họ và tên:** **Nguyễn Khánh Đô**
 * **MSSV:** **02687**
 * **Nhóm thực hiện:** Nhóm ToiyeuPNV (5 thành viên)
 * **Vai trò trong nhóm:** **Performance Profiler & Telemetry Metrics Engineer**
 * **Tệp danh sách nhóm:** [TEAMMATES.md](../TEAMMATES.md)
-* **GitHub Repository chung:** [https://github.com/nguyenquangdao2004-glitch/K4-Track4-Day4-ToiyeuPNV-multi-camera-bandwidth-profiler](https://github.com/nguyenquangdao2004-glitch/K4-Track4-Day4-ToiyeuPNV-multi-camera-bandwidth-profiler)
+* **GitHub Repository chung:** [https://github.com/nguyenquangdao2004-glitch/K4-Track4-Day4-ToiyeuPNV-Sensor-Reality-Sprint](https://github.com/nguyenquangdao2004-glitch/K4-Track4-Day4-ToiyeuPNV-Sensor-Reality-Sprint)
 * **Commit Version:** `1296c52`
 * **Lệnh chạy tái hiện:** `python generate_videos.py && python run.py` (Dashboard: `http://localhost:8000`)
 
