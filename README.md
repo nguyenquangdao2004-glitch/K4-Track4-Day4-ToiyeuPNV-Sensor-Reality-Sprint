@@ -12,15 +12,16 @@ Hệ thống **Multi-Camera Bandwidth & Performance Profiler** được xây d�
 
 ---
 
-## 👥 2. Phân công nhóm 5 thành viên
+## 👥 2. Danh sách 5 thành viên & Báo cáo cá nhân (VLearn Submissions)
+Chi tiết danh sách tại [TEAMMATES.md](TEAMMATES.md).
 
-| STT | Thành viên | Vai trò | Trách nhiệm chính |
-| :---: | :--- | :--- | :--- |
-| **1** | **Thành viên 1** | **Trưởng nhóm / Presenter** | Chốt giả thuyết, tổng hợp tài liệu, làm slide và pitch 3–5 phút. |
-| **2** | **Thành viên 2** | **Streaming & Ingestion Lead** | Quản lý 4 luồng video mô phỏng camera xe/robot, điều khiển độ phân giải (360p, 720p, 1080p), đo băng thông nạp vào (Mbps). |
-| **3** | **Thành viên 3** | **AI Pipeline Engineer** | Tích hợp mô hình AI Object Detector, quản lý hàng đợi bounded buffer (`maxsize=2`) để kích hoạt cơ chế drop frame khi nghẽn. |
-| **4** | **Thành viên 4** | **Performance & Metrics Engineer** | Xây dựng bộ đo đạc thời gian thực 5 chỉ số: FPS, Latency (Avg & P95), Drop Frame %, CPU/GPU load, ghi log CSV tự động. |
-| **5** | **Thành viên 5** | **Dashboard & Benchmark Lead** | Dựng giao diện Web Cyberpunk Dark Mode, thực hiện Stress Test 1➔4 camera, trực quan hóa biểu đồ và xuất báo cáo. |
+| STT | Họ và tên | MSSV | Vai trò chính trong dự án | Tệp báo cáo riêng nộp VLearn |
+| :---: | :--- | :---: | :--- | :--- |
+| **1** | **Nguyễn Quang Đạo** | **02394** | **Trưởng nhóm & System Architect / Pitch Lead** | [`reports/REPORT_NGUYEN_QUANG_DAO_02394.md`](reports/REPORT_NGUYEN_QUANG_DAO_02394.md) |
+| **2** | **Ngô Thế Việt** | **02594** | **Streaming Ingestion & Network Bandwidth Engineer** | [`reports/REPORT_NGO_THE_VIET_02594.md`](reports/REPORT_NGO_THE_VIET_02594.md) |
+| **3** | **Đinh Bảo Hưng** | **02524** | **AI Pipeline & Bounded Queue Engineer** | [`reports/REPORT_DINH_BAO_HUNG_02524.md`](reports/REPORT_DINH_BAO_HUNG_02524.md) |
+| **4** | **Nguyễn Thành Đô** | **02687** | **Performance Profiler & Telemetry Metrics Engineer** | [`reports/REPORT_NGUYEN_THANH_DO_02687.md`](reports/REPORT_NGUYEN_THANH_DO_02687.md) |
+| **5** | **Đoàn Phương Linh** | **02382** | **Dashboard Visualizer & Benchmark Validation Lead** | [`reports/REPORT_DOAN_PHUONG_LINH_02382.md`](reports/REPORT_DOAN_PHUONG_LINH_02382.md) |
 
 ---
 
